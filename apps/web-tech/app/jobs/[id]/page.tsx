@@ -14,6 +14,7 @@ import { CaseStatus } from "@repo/domain";
 import { useParams } from "next/navigation";
 
 const steps: { label: string; to: CaseStatus }[] = [
+  { label: "배정됨", to: CaseStatus.ASSIGNED },
   { label: "출동 시작", to: CaseStatus.EN_ROUTE },
   { label: "도착", to: CaseStatus.ARRIVED },
   { label: "작업 시작", to: CaseStatus.WORKING },

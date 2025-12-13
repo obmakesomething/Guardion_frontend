@@ -1,1 +1,974 @@
-# Placeholder OpenAPI spec. Run `pnpm fetch:openapi` to download the latest copy.
+openapi: 3.1.0
+info:
+  title: Emergency Unlock Ops Platform API
+  version: 0.1.0
+  description: >
+    MVP API for emergency door unlock dispatch.
+    No online payments. Accruals are recorded on callcenter accept; invoices are generated for bulk billing later.
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Auth
+  - name: Customer
+  - name: Callcenter
+  - name: Tech
+  - name: Realtime
+  - name: Evidence
+  - name: Billing
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login (email/password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/verify-phone:
+    post:
+      tags: [Auth]
+      summary: Verify phone (optional for partners)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyPhoneRequest"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyPhoneResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile and org memberships
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cases:
+    post:
+      tags: [Customer]
+      summary: Create and submit a case (customer)
+      description: >
+        Creates a case with location and optional evidence metadata.
+        Evidence upload uses presigned URL flow under /cases/{id}/evidence.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cases/{caseId}:
+    get:
+      tags: [Customer, Callcenter, Tech]
+      summary: Get case detail
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: Case detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /cases/{caseId}/risk:
+    post:
+      tags: [Callcenter]
+      summary: Set risk decision (proceed / need approval / reject)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetRiskRequest"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/dispatch/offers:
+    post:
+      tags: [Callcenter]
+      summary: Create dispatch offers (to one or more techs)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDispatchOffersRequest"
+      responses:
+        "201":
+          description: Offers created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  offers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DispatchOffer"
+                required: [offers]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/accept:
+    post:
+      tags: [Callcenter]
+      summary: Accept a case (creates accrual record; no payment)
+      description: >
+        Accept locks the case for the org and creates an Accrual(amount=3000).
+        Must be idempotent (double click safe).
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: Accepted + accrual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptCaseResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /cases/{caseId}/assign:
+    post:
+      tags: [Callcenter]
+      summary: Assign a technician to a case
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignTechRequest"
+      responses:
+        "200":
+          description: Assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/cancel:
+    post:
+      tags: [Customer, Callcenter]
+      summary: Cancel a case
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelCaseRequest"
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/status:
+    post:
+      tags: [Tech]
+      summary: Update case status (tech)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseStatusRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/otp/request:
+    post:
+      tags: [Tech]
+      summary: Request OTP (send to customer)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OTP issued (masked)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpIssuedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/otp/verify:
+    post:
+      tags: [Customer]
+      summary: Verify OTP (completes case)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyRequest"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpVerifyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/opinion:
+    post:
+      tags: [Tech]
+      summary: Submit technical opinion report (non-legal)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitOpinionRequest"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechOpinionReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/report:
+    get:
+      tags: [Customer, Callcenter]
+      summary: Get report link (technical opinion + evidence package)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: Report link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportLinkResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/evidence/presign:
+    post:
+      tags: [Evidence]
+      summary: Create presigned upload URL for evidence
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidencePresignRequest"
+      responses:
+        "200":
+          description: Presigned URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidencePresignResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /cases/{caseId}/evidence/complete:
+    post:
+      tags: [Evidence]
+      summary: Complete evidence upload (register metadata)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceCompleteRequest"
+      responses:
+        "201":
+          description: Evidence registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evidence"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /tech/location/ping:
+    post:
+      tags: [Tech]
+      summary: Send technician GPS ping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TechLocationPingRequest"
+      responses:
+        "204":
+          description: Accepted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /tech/cases/assigned:
+    get:
+      tags: [Tech]
+      summary: List assigned cases for the technician
+      responses:
+        "200":
+          description: Assigned cases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cases:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Case"
+                required: [cases]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /orgs/{orgId}/cases:
+    get:
+      tags: [Callcenter]
+      summary: List cases for an org (queue)
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CaseStatus"
+      responses:
+        "200":
+          description: Cases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cases:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Case"
+                required: [cases]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /orgs/{orgId}/accruals:
+    get:
+      tags: [Billing]
+      summary: List accruals for an org
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - name: period_start
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: period_end
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/AccrualStatus"
+      responses:
+        "200":
+          description: Accruals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accruals:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Accrual"
+                required: [accruals]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /orgs/{orgId}/invoices/generate:
+    post:
+      tags: [Billing]
+      summary: Generate an invoice draft from accruals
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateInvoiceRequest"
+      responses:
+        "201":
+          description: Invoice draft generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /realtime/cases/{caseId}:
+    get:
+      tags: [Realtime]
+      summary: SSE stream for a case (customer + permitted roles)
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /realtime/orgs/{orgId}/cases:
+    get:
+      tags: [Realtime]
+      summary: SSE stream for org queue updates (callcenter)
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /realtime/tech/me:
+    get:
+      tags: [Realtime]
+      summary: SSE stream for technician assignments and updates
+      responses:
+        "200":
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CaseId:
+      name: caseId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OrgId:
+      name: orgId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    # ---------- Common ----------
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+      required: [code, message]
+
+    UserRole:
+      type: string
+      enum: [customer, callcenter, tech, admin]
+
+    CaseStatus:
+      type: string
+      enum:
+        - SUBMITTED
+        - NEED_APPROVAL
+        - DISPATCHING
+        - ACCEPTED
+        - ASSIGNED
+        - EN_ROUTE
+        - ARRIVED
+        - WORKING
+        - OTP_PENDING
+        - COMPLETED
+        - CANCELLED
+        - EXPIRED
+        - REJECTED
+        - FAILED
+
+    EvidenceType:
+      type: string
+      enum: [door, lock, key, other]
+
+    ConfidenceLevel:
+      type: string
+      enum: [high, medium, low]
+
+    CauseCategory:
+      type: string
+      enum: [suspected_defect, suspected_user_issue, unknown]
+
+    AccrualStatus:
+      type: string
+      enum: [ACCRUED, VOIDED, INVOICED]
+
+    InvoiceStatus:
+      type: string
+      enum: [DRAFT, SENT, PAID]
+
+    # ---------- Auth ----------
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+      required: [email, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+      required: [access_token, refresh_token]
+
+    VerifyPhoneRequest:
+      type: object
+      properties:
+        phone: { type: string }
+        code: { type: string, minLength: 4, maxLength: 8 }
+      required: [phone, code]
+
+    VerifyPhoneResponse:
+      type: object
+      properties:
+        verified: { type: boolean }
+      required: [verified]
+
+    MeResponse:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        role: { $ref: "#/components/schemas/UserRole" }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        orgs:
+          type: array
+          items:
+            type: object
+            properties:
+              org_id: { type: string, format: uuid }
+              org_name: { type: string }
+              scope: { type: string }
+            required: [org_id, org_name, scope]
+      required: [user_id, role, email, orgs]
+
+    # ---------- Case ----------
+    CreateCaseRequest:
+      type: object
+      properties:
+        customer_phone: { type: string }
+        address_text: { type: string }
+        location_lat: { type: number }
+        location_lng: { type: number }
+        place_note: { type: string, nullable: true }
+        symptom_note: { type: string, nullable: true }
+      required: [customer_phone, address_text, location_lat, location_lng]
+
+    Case:
+      type: object
+      properties:
+        case_id: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/CaseStatus" }
+        risk_level: { type: integer, minimum: 0, maximum: 5 }
+        created_at: { type: string, format: date-time }
+        customer_id: { type: string, format: uuid, nullable: true }
+        customer_phone: { type: string }
+        address_text: { type: string }
+        location_lat: { type: number }
+        location_lng: { type: number }
+        place_note: { type: string, nullable: true }
+        assigned_org_id: { type: string, format: uuid, nullable: true }
+        assigned_tech_id: { type: string, format: uuid, nullable: true }
+        accepted_at: { type: string, format: date-time, nullable: true }
+      required:
+        - case_id
+        - status
+        - created_at
+        - customer_phone
+        - address_text
+        - location_lat
+        - location_lng
+
+    CaseDetail:
+      allOf:
+        - $ref: "#/components/schemas/Case"
+        - type: object
+          properties:
+            eta_seconds: { type: integer, nullable: true }
+            tech_summary:
+              type: object
+              nullable: true
+              properties:
+                tech_id: { type: string, format: uuid }
+                display_name: { type: string }
+                phone_relay: { type: string, nullable: true }
+              required: [tech_id, display_name]
+            evidence:
+              type: array
+              items:
+                $ref: "#/components/schemas/Evidence"
+          required: [evidence]
+
+    SetRiskRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [PROCEED, NEED_APPROVAL, REJECT]
+        risk_level: { type: integer, minimum: 0, maximum: 5 }
+        note: { type: string, nullable: true }
+      required: [decision, risk_level]
+
+    CreateDispatchOffersRequest:
+      type: object
+      properties:
+        tech_ids:
+          type: array
+          items: { type: string, format: uuid }
+          minItems: 1
+      required: [tech_ids]
+
+    DispatchOffer:
+      type: object
+      properties:
+        offer_id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        tech_id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [SENT, ACCEPTED, DECLINED, EXPIRED]
+        created_at: { type: string, format: date-time }
+      required: [offer_id, case_id, tech_id, status, created_at]
+
+    AcceptCaseResponse:
+      type: object
+      properties:
+        case: { $ref: "#/components/schemas/Case" }
+        accrual: { $ref: "#/components/schemas/Accrual" }
+      required: [case, accrual]
+
+    AssignTechRequest:
+      type: object
+      properties:
+        tech_id: { type: string, format: uuid }
+      required: [tech_id]
+
+    CancelCaseRequest:
+      type: object
+      properties:
+        reason: { type: string }
+      required: [reason]
+
+    UpdateCaseStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        note: { type: string, nullable: true }
+      required: [status]
+
+    # ---------- OTP ----------
+    OtpIssuedResponse:
+      type: object
+      properties:
+        case_id: { type: string, format: uuid }
+        expires_at: { type: string, format: date-time }
+      required: [case_id, expires_at]
+
+    OtpVerifyRequest:
+      type: object
+      properties:
+        otp: { type: string, minLength: 4, maxLength: 8 }
+      required: [otp]
+
+    OtpVerifyResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        case: { $ref: "#/components/schemas/Case" }
+      required: [ok, case]
+
+    # ---------- Evidence ----------
+    EvidencePresignRequest:
+      type: object
+      properties:
+        type: { $ref: "#/components/schemas/EvidenceType" }
+        content_type: { type: string, example: image/jpeg }
+        file_name: { type: string }
+      required: [type, content_type, file_name]
+
+    EvidencePresignResponse:
+      type: object
+      properties:
+        upload_url: { type: string }
+        method: { type: string, enum: [PUT, POST] }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+        object_key: { type: string }
+        expires_at: { type: string, format: date-time }
+      required: [upload_url, method, object_key, expires_at]
+
+    EvidenceCompleteRequest:
+      type: object
+      properties:
+        type: { $ref: "#/components/schemas/EvidenceType" }
+        object_key: { type: string }
+      required: [type, object_key]
+
+    Evidence:
+      type: object
+      properties:
+        evidence_id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/EvidenceType" }
+        uploader_role: { $ref: "#/components/schemas/UserRole" }
+        created_at: { type: string, format: date-time }
+        view_url:
+          type: string
+          nullable: true
+          description: Signed URL if viewer has permission
+      required: [evidence_id, case_id, type, uploader_role, created_at]
+
+    # ---------- Tech GPS ----------
+    TechLocationPingRequest:
+      type: object
+      properties:
+        lat: { type: number }
+        lng: { type: number }
+        accuracy: { type: number, nullable: true }
+        ts: { type: string, format: date-time }
+      required: [lat, lng, ts]
+
+    # ---------- Opinion / Report ----------
+    SubmitOpinionRequest:
+      type: object
+      properties:
+        cause_category: { $ref: "#/components/schemas/CauseCategory" }
+        basis_text: { type: string }
+        confidence: { $ref: "#/components/schemas/ConfidenceLevel" }
+      required: [cause_category, basis_text, confidence]
+
+    TechOpinionReport:
+      type: object
+      properties:
+        case_id: { type: string, format: uuid }
+        cause_category: { $ref: "#/components/schemas/CauseCategory" }
+        basis_text: { type: string }
+        confidence: { $ref: "#/components/schemas/ConfidenceLevel" }
+        signed_at: { type: string, format: date-time }
+        disclaimer:
+          type: string
+          example: "This is a technical opinion and not a legal determination."
+      required: [case_id, cause_category, basis_text, confidence, signed_at, disclaimer]
+
+    ReportLinkResponse:
+      type: object
+      properties:
+        case_id: { type: string, format: uuid }
+        report_url: { type: string }
+      required: [case_id, report_url]
+
+    # ---------- Billing (no payment) ----------
+    Accrual:
+      type: object
+      properties:
+        accrual_id: { type: string, format: uuid }
+        org_id: { type: string, format: uuid }
+        case_id: { type: string, format: uuid }
+        amount: { type: integer, example: 3000 }
+        status: { $ref: "#/components/schemas/AccrualStatus" }
+        created_at: { type: string, format: date-time }
+      required: [accrual_id, org_id, case_id, amount, status, created_at]
+
+    GenerateInvoiceRequest:
+      type: object
+      properties:
+        period_start: { type: string, format: date }
+        period_end: { type: string, format: date }
+      required: [period_start, period_end]
+
+    Invoice:
+      type: object
+      properties:
+        invoice_id: { type: string, format: uuid }
+        org_id: { type: string, format: uuid }
+        period_start: { type: string, format: date }
+        period_end: { type: string, format: date }
+        total_amount: { type: integer }
+        status: { $ref: "#/components/schemas/InvoiceStatus" }
+        created_at: { type: string, format: date-time }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              accrual_id: { type: string, format: uuid }
+              amount: { type: integer }
+            required: [accrual_id, amount]
+      required: [invoice_id, org_id, period_start, period_end, total_amount, status, created_at, lines]

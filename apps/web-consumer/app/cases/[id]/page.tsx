@@ -19,7 +19,7 @@ const steps = ["접수", "승인/검토", "배차", "출동", "OTP", "완료"];
 export default function CaseDetailPage() {
   const params = useParams();
   const id = params?.id || "123";
-  const status = CaseStatus.DISPATCHED;
+  const status = CaseStatus.ASSIGNED;
 
   return (
     <AppShell title={`케이스 ${id}`} subtitle="C-03 — 진행/트래킹">

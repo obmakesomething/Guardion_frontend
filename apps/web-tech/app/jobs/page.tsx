@@ -5,7 +5,7 @@ import { AppShell, CaseCard } from "@repo/ui";
 import { CaseStatus } from "@repo/domain";
 
 const jobs = [
-  { id: "301", status: CaseStatus.DISPATCHED, gu: "강남구", createdAt: new Date().toISOString() },
+  { id: "301", status: CaseStatus.ASSIGNED, gu: "강남구", createdAt: new Date().toISOString() },
   { id: "302", status: CaseStatus.NEED_APPROVAL, gu: "마포구", createdAt: new Date().toISOString() }
 ];
 
