@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech Web · Lock Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../shared/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1>Tech Web — 배정/진행/추가비 동의</h1>
+          <small>tech.<domain> 전용, role 가드 필수</small>
+        </div>
+        <div class="badge">Field App</div>
+      </header>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>배정 목록 (T-02)</h2>
+          <p>오늘/현재 작업을 상태 배지와 함께 보여줍니다.</p>
+          <table class="table">
+            <thead>
+              <tr><th>케이스</th><th>상태</th><th>ETA</th><th>CTA</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>CASE-103</td><td><span class="status info">DISPATCHED</span></td><td>약 10–15분</td><td>열기</td></tr>
+              <tr><td>CASE-104</td><td><span class="status warn">NEED_APPROVAL</span></td><td>-</td><td>대기</td></tr>
+            </tbody>
+          </table>
+          <div class="notice">이벤트: <code>tech_jobs_page_view</code>, <code>tech_job_open</code></div>
+        </div>
+
+        <div class="card">
+          <h2>작업 상세 (T-03)</h2>
+          <h3>Action Stepper</h3>
+          <ul class="list">
+            <li>출동 시작 → 도착 → 작업 시작 → OTP 요청 (EN_ROUTE → ARRIVED → WORKING → OTP_PENDING)</li>
+            <li>네트워크 실패 시 재시도 큐 + 토스트</li>
+          </ul>
+          <h3>추가 작업비 요청/동의</h3>
+          <ul class="list">
+            <li>실린더 교체 등 추가비 발생 시 고객 재동의 버튼/서명/문자 확인</li>
+            <li>동의 로그: 시각/금액/담당자/방식 기록, 이벤트 <code>tech_fee_consent</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>전/후 사진 (필수)</h2>
+          <p>PhotoUploader를 전/후 구분으로 필수화하여 작업 진행을 차단합니다.</p>
+          <ul class="list">
+            <li>문/도어락/실린더 상태, 손상 여부 전·후 촬영</li>
+            <li>“기존 하자 미기록 시 책임 귀속” 문구 노출</li>
+            <li>업로드 실패 시 재시도 버튼 + 진행률</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>보고/위치</h2>
+          <ul class="list">
+            <li>리포트 작성(T-04): 원인 카테고리, 근거(필수), 확신도</li>
+            <li>위치 권한(T-05): “고객 화면에는 영역+ETA만 표시” 안내</li>
+            <li>TechMap은 정밀 GPS 허용(운영용)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>정책/고지</h2>
+          <ul class="list">
+            <li>중개자 고지 문구 + 기사 상호/연락처/사업자정보 표시</li>
+            <li>취소/노쇼/지연 기준을 기사에게도 노출</li>
+            <li>개인정보처리방침 링크 `/legal/privacy`</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

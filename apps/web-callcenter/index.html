@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Callcenter Console · Lock Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../shared/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1>Callcenter Console — 큐/배차/동의 로그</h1>
+          <small>ops.<domain> 전용 콘솔, role 가드 필수</small>
+        </div>
+        <div class="badge">Ops Desk</div>
+      </header>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>큐 뷰 (O-02)</h2>
+          <p>TwoPaneLayout: 리스트 + 상세.</p>
+          <table class="table">
+            <thead>
+              <tr><th>상태</th><th>접수시각</th><th>지역</th><th>리스크</th><th>CTA</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="status info">SUBMITTED</span></td><td>12:30</td><td>강남구</td><td>낮음</td><td>열기</td></tr>
+              <tr><td><span class="status warn">NEED_APPROVAL</span></td><td>12:10</td><td>마포구</td><td>중간</td><td>승인</td></tr>
+              <tr><td><span class="status success">DISPATCHING</span></td><td>11:58</td><td>송파구</td><td>높음</td><td>배차</td></tr>
+            </tbody>
+          </table>
+          <div class="notice">미로그인 시 전부 redirect. 이벤트: <code>ops_queue_page_view</code>, <code>ops_case_open</code>.</div>
+        </div>
+
+        <div class="card">
+          <h2>케이스 상세 (O-03)</h2>
+          <h3>리스크 게이트</h3>
+          <ul class="list">
+            <li>Proceed / Need approval / Reject → `POST /ops/cases/{id}/decision`</li>
+            <li>Need approval는 고객 UI에 이름/전화/이메일만 요청</li>
+          </ul>
+          <h3>배차/정산</h3>
+          <ul class="list">
+            <li>DispatchPanel: 후보 기사 정렬 + 배정 버튼</li>
+            <li>수락 시 3,000원 정산 이벤트 기록(배지/토스트/로그)</li>
+          </ul>
+          <h3>추가비 동의</h3>
+          <ul class="list">
+            <li>기사 요청 추가비를 고객 재동의 받았는지 확인/로그 노출</li>
+            <li>동의 로그: 시각/금액/담당자/방식 + 이벤트 <code>consumer_fee_consent</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>증빙/로그</h2>
+          <p>EvidenceGallery(전/후 필수), AuditLog(누가/언제/무엇을) 확인.</p>
+          <div class="notice">
+            전/후 사진 필수 요건을 검증하고, “기존 하자 미기록 시 책임 안내”를 표시합니다.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>CS 운영</h2>
+          <ul class="list">
+            <li>취소/노쇼/지연 기준: 출동 시작 이후 취소 시 출동비 발생 등</li>
+            <li>이의제기 접수 채널: 카톡/전화 + 폼(시간/주소/증빙) 링크 유지</li>
+            <li>고객에게 중개자 고지, 기사 상호/연락처/사업자정보 노출 여부 확인</li>
+          </ul>
+          <div class="footer">콜센터가 수기로라도 입력/확인할 수 있는 필드를 둡니다.</div>
+        </div>
+
+        <div class="card">
+          <h2>정책/법무</h2>
+          <ul class="list">
+            <li>중개자 고지 문구 상시 노출</li>
+            <li>개인정보처리방침 `/legal/privacy` 링크(수집항목/목적/보유기간/제3자 제공/파기/문의처)</li>
+            <li>추가비 재동의에 대한 SMS/서명 요청 기록 유지</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

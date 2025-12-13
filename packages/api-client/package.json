@@ -1,0 +1,11 @@
+{
+  "name": "@repo/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "gen": "openapi-typescript ../../openapi/openapi.yaml -o src/generated/schema.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.0.0"
+  }
+}

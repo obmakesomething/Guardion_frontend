@@ -1,0 +1,11 @@
+{
+  "name": "lock-platform-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "fetch:openapi": "bash scripts/fetch-openapi.sh",
+    "gen:api": "pnpm -C packages/api-client gen",
+    "prepare:api": "pnpm fetch:openapi && pnpm gen:api"
+  },
+  "packageManager": "pnpm@9"
+}
