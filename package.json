@@ -5,7 +5,12 @@
   "scripts": {
     "fetch:openapi": "bash scripts/fetch-openapi.sh",
     "gen:api": "pnpm -C packages/api-client gen",
-    "prepare:api": "pnpm fetch:openapi && pnpm gen:api"
+    "prepare:api": "pnpm fetch:openapi && pnpm gen:api",
+    "dev:consumer": "pnpm -C apps/web-consumer dev",
+    "dev:callcenter": "pnpm -C apps/web-callcenter dev",
+    "dev:tech": "pnpm -C apps/web-tech dev",
+    "build": "pnpm -C apps/web-consumer build && pnpm -C apps/web-callcenter build && pnpm -C apps/web-tech build",
+    "lint": "pnpm -C apps/web-consumer lint && pnpm -C apps/web-callcenter lint && pnpm -C apps/web-tech lint"
   },
   "packageManager": "pnpm@9"
 }

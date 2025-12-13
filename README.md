@@ -3,7 +3,11 @@
 Monorepo for consumer, callcenter, and tech web apps. The frozen product and UX requirements live in `docs/FRONTEND_SPEC.md`.
 
 ## Quick preview
-- Static wireframes: open `apps/web-consumer/index.html`, `apps/web-callcenter/index.html`, `apps/web-tech/index.html` in a browser to see the UX skeleton, compliance notices, and fee consent requirements.
+- Next.js apps (App Router)
+  - Consumer: `pnpm dev:consumer` → http://localhost:3000
+  - Callcenter: `pnpm dev:callcenter` → http://localhost:3000 (per app)
+  - Tech: `pnpm dev:tech` → http://localhost:3000
+  - All pages use the shared `@repo/ui` components and include policy/compliance notices.
 
 ## Workspace scripts
 - `pnpm fetch:openapi` — download OpenAPI spec to `openapi/openapi.yaml`
