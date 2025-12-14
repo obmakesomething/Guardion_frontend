@@ -25,13 +25,13 @@ export default function ApprovalPage() {
     <AppShell title="승인 필요" subtitle="C-04 — Need approval 최소 정보">
       <SectionCard heading={`케이스 ${id} 추가 정보`}>
         <FormField label="이름">
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} />
         </FormField>
         <FormField label="전화번호">
-          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input value={phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)} />
         </FormField>
         <FormField label="이메일">
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input value={email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} />
         </FormField>
         <p style={{ color: "var(--neutral-500)" }}>정부24/카카오 인증, 관리실 연락, 임대차 연락은 추후 구현(Disabled)</p>
         {error && (
