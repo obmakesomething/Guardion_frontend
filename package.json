@@ -12,5 +12,5 @@
     "build": "pnpm -C apps/web-consumer build && pnpm -C apps/web-callcenter build && pnpm -C apps/web-tech build",
     "lint": "pnpm -C apps/web-consumer lint && pnpm -C apps/web-callcenter lint && pnpm -C apps/web-tech lint"
   },
-  "packageManager": "pnpm@9"
+  "packageManager": "pnpm@9.0.6"
 }
