@@ -47,7 +47,11 @@ export default function RequestPage() {
 
         <SectionCard heading="연락처">
           <FormField label="전화번호" hint="필수">
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="010-1234-5678" />
+            <Input
+              value={phone}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+              placeholder="010-1234-5678"
+            />
           </FormField>
         </SectionCard>
 
